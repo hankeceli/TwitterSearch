@@ -85,6 +85,26 @@ class TwitterSearchOrderTest(unittest.TestCase):
             except TwitterSearchException as e:
                 self.assertEqual(e.code, 1007, "Wrong exception code")
 
+    def test_TSO_since(self):
+        """ Tests TwitterSearchOrder.set_since() """
+
+        tso = self.getCopy()
+        today = date.today()
+        correct_values = [ today, today - timedelta(days=1), today - timedelta(days=10), today - timedelta(days=371) ]
+        for value in correct_values:
+            tso.set_since(value)
+            cor = '%s&since=%s' % (self.__tso.create_search_url(), value.strftime('%Y-%m-%d'))
+            self.assertEqualQuery(tso.create_search_url(), cor)
+
+        # wrong values
+        wrong_values = [ today + timedelta(days=1), '', [], {}, -1, 39.0, 31, 'foobar' ]
+        for value in wrong_values:
+            try:
+                tso.set_since(value)
+                assertTrue(False, "Not raising exception for %s" % value.strfttime('%Y-%m-%d'))
+            except TwitterSearchException as e:
+                self.assertEqual(e.code, 1008, "Wrong exception code")
+
     def test_TSO_search_encoding(self):
         """ Tests the url encoding of TwitterSearchOrder.create_search_url() """
 
@@ -380,7 +400,7 @@ class TwitterSearchOrderTest(unittest.TestCase):
         """ Tests TwitterSearchOrder.set_search_url() """
 
         tso1 = self.getCopy()
-        tso1.set_search_url('?q=test1+test2&count=77&until=2013-07-10&locale=en')
+        tso1.set_search_url('?q=test1+test2&count=77&until=2013-07-10&since=2013-06-25&locale=en')
 
         # testing filter settings (off)
         self.assertFalse(tso1.question_filter)
@@ -392,6 +412,7 @@ class TwitterSearchOrderTest(unittest.TestCase):
         tso2.set_keywords([ 'test1', 'test2' ])
         tso2.set_count(77)
         tso2.set_until(date(2013,7,10))
+        tso2.set_since(date(2013,6,25))
         tso2.set_locale('en')
 
         self.assertEqualQuery(tso1.create_search_url(), tso2.create_search_url(), "Query strings NOT equal")
@@ -424,3 +445,5 @@ class TwitterSearchOrderTest(unittest.TestCase):
             to.set_search_url(value)
             to.create_search_url()
 
+if __name__ == '__main__':
+        unittest.main()
